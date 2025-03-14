@@ -736,7 +736,7 @@ elif section == "POMDP Simulation":
     pomdp_simulation_section()
 elif section == "Nash Equilibrium Analysis":
     nash_equilibrium_section()
-elif section == "MDP Policy Update with Nash":
+elif section == "MDP Policy Update using Nash":
     policy_update_section()
 elif section == "Optimal Delivery Route Visualization":
     route_visualization_section()
