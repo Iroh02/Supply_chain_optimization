@@ -7,7 +7,7 @@ import random
 import nashpy as nash
 import seaborn as sns
 import plotly.express as px
-
+import plotly.graph_objects as go
 # =============================================================================
 # Synthetic Data Generation
 # =============================================================================
@@ -966,7 +966,7 @@ section = st.sidebar.selectbox(
     ]
 )
 
-if section == "Synthetic Data Generation":
+if section == "Dashboard":
     synthetic_data_section()
 elif section == "MDP Optimization":
     mdp_optimization_section()
