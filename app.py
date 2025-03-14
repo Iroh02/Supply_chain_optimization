@@ -941,12 +941,58 @@ def route_visualization_section():
 
     # Display the actual route text
     st.write("**Optimal Route:**", " → ".join(shortest_path))
+# def simulation_section():
+#     st.header("Real-Time Decision-Making Simulation")
+#     duration = st.slider("Simulation Duration (time steps)", 50, 200, 100, step=10)
+#     if st.button("Run Simulation"):
+#         sim_df = real_time_simulation(duration)
+#         st.line_chart(sim_df)
 def simulation_section():
     st.header("Real-Time Decision-Making Simulation")
+
+    # 1) Let user pick simulation duration
     duration = st.slider("Simulation Duration (time steps)", 50, 200, 100, step=10)
+
+    # 2) Run simulation on button click
     if st.button("Run Simulation"):
         sim_df = real_time_simulation(duration)
+
+        # 3) Display line chart
         st.line_chart(sim_df)
+
+        # 4) Provide some summary statistics/insights
+        st.subheader("Simulation Insights")
+
+        # a) Basic Stats
+        avg_demand = sim_df["Demand"].mean()
+        max_inventory = sim_df["Inventory"].max()
+        min_inventory = sim_df["Inventory"].min()
+
+        st.write(f"- **Average Demand**: {avg_demand:.2f} units")
+        st.write(f"- **Maximum Inventory**: {max_inventory} units")
+        st.write(f"- **Minimum Inventory**: {min_inventory} units")
+
+        # b) Example Additional Insight: Inventory Runout
+        # Check if inventory ever hits zero (stockout)
+        stockouts = (sim_df["Inventory"] == 0).sum()
+        if stockouts > 0:
+            st.warning(f"Stockouts occurred {stockouts} time(s). Consider increasing safety stock or improving replenishment.")
+        else:
+            st.success("No stockouts occurred during this simulation.")
+
+        # c) Another Example: Demand Surges
+        # We'll define a 'surge' if demand > average + 2 * std dev
+        demand_std = sim_df["Demand"].std()
+        surge_threshold = avg_demand + 2 * demand_std
+        surge_count = (sim_df["Demand"] > surge_threshold).sum()
+
+        if surge_count > 0:
+            st.info(f"High-demand surges occurred {surge_count} time(s). Peak demand can stress the supply chain.")
+        else:
+            st.write("No significant demand surges occurred during this simulation.")
+
+        # d) You can add more business-specific insights here
+        # e.g., fill rate, average backlog, cost implications, etc.
 
 # =============================================================================
 # Main App Layout
