@@ -55,32 +55,30 @@ mdp_rewards = {
 }
 
 # ---- DYNAMIC Value Iteration to show intermediate steps ----
+# ---- DYNAMIC Value Iteration to show intermediate steps ----
 def value_iteration(states, actions, transition_probs, rewards, gamma=0.9, theta=0.0001, max_iters=50):
     """
-    Returns a list of tuples (iteration_index, policy, value_function)
-    so we can display the changes step-by-step.
+    Performs value iteration and returns a list of tuples for each iteration.
+    Each tuple is (iteration_index, policy, value_function).
     """
     # Initialize value function
-    V = {s: 0.0 for s in states}  
+    V = {s: 0.0 for s in states}
     # Initialize a random policy for non-terminal states
     policy = {s: random.choice(actions) for s in states if s != 'Customer'}
 
     iteration_logs = []
     for i in range(max_iters):
         delta = 0
-        # Copy for step-by-step updates
         new_V = V.copy()
         new_policy = policy.copy()
 
         for s in states:
-            if s == 'Customer':
-                # Terminal state; skip
+            if s == 'Customer':  # Terminal state
                 continue
             
             max_value = float('-inf')
             best_action = None
 
-            # Evaluate each action from this state
             for a in actions:
                 if (s, a) in transition_probs:
                     expected_value = 0.0
@@ -90,24 +88,46 @@ def value_iteration(states, actions, transition_probs, rewards, gamma=0.9, theta
                     if expected_value > max_value:
                         max_value = expected_value
                         best_action = a
-            
-            # Update the value function and policy
+
             new_V[s] = max_value
             new_policy[s] = best_action
             delta = max(delta, abs(V[s] - max_value))
 
-        # Overwrite the old V and policy with updated ones
         V = new_V
         policy = new_policy
-
-        # Store iteration results
         iteration_logs.append((i+1, policy.copy(), V.copy()))
-
-        # Convergence check
         if delta < theta:
             break
 
     return iteration_logs
+
+# ---- MDP Optimization Section for Streamlit App ----
+def mdp_optimization_section():
+    st.header("MDP Optimization - Value Iteration (Dynamic)")
+    gamma = st.slider("Discount Factor (gamma)", 0.0, 1.0, 0.9, 0.01)
+    theta = st.slider("Convergence Threshold (theta)", 1e-6, 1e-1, 1e-4, format="%.1e")
+    max_iters = st.slider("Max Iterations", 1, 100, 50)
+
+    if st.button("Run Value Iteration"):
+        logs = value_iteration(mdp_states, mdp_actions, mdp_transition_probs, mdp_rewards,
+                               gamma=gamma, theta=theta, max_iters=max_iters)
+        st.write(f"**Total Iterations:** {len(logs)}")
+        
+        # Extract final iteration's policy and value function
+        final_iter, final_policy, final_values = logs[-1]
+        st.subheader(f"Converged at Iteration {final_iter}")
+        st.write("**Final Optimal Policy:**")
+        st.write(final_policy)
+        st.write("**Final State Values:**")
+        st.write(final_values)
+        
+        # Optionally, display the step-by-step logs
+        st.markdown("### Step-by-Step Iteration Logs")
+        for (iter_num, p, v) in logs:
+            st.markdown(f"**Iteration {iter_num}:**")
+            st.write("Policy:", p)
+            st.write("State Values:", v)
+
 # =============================================================================
 # POMDP Components for Supply Chain
 # =============================================================================
@@ -373,7 +393,7 @@ def simulation_section():
 # Main App Layout
 # =============================================================================
 st.title("Supply Chain Optimization Dashboard")
-section = st.sidebar.radio("Select Section", 
+section = st.sidebar("Select Section", 
                            ["Synthetic Data Generation", 
                             "MDP Optimization", 
                             "Transition Model Visualization", 
