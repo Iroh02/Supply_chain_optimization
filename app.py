@@ -788,7 +788,7 @@ def nash_equilibrium_section():
 #         st.write("Updated Supply Chain Policy:")
 #         st.write(updated_policy)
 def policy_update_section():
-    st.header("Update MDP Policy with Nash Equilibrium (Dynamic & Silent)")
+    st.header("Update MDP Policy with Nash Equilibrium ")
     equilibria = nash_equilibrium_analysis()
 
     if not equilibria:
