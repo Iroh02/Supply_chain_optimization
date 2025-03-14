@@ -4,31 +4,34 @@ import pandas as pd
 import numpy as np
 import networkx as nx
 import plotly.graph_objects as go
-import nashpy as nash
+from pyvis.network import Network
 import random
+import nashpy as nash
+import matplotlib.pyplot as plt
 
-# --- APP CONFIGURATION ---
-st.set_page_config(page_title="📦 Supply Chain Management System", layout="wide")
+# ---------------------- Streamlit Page Config ---------------------- #
+st.set_page_config(page_title="📦 Supply Chain Optimization", layout="wide")
 
-# --- SIDEBAR NAVIGATION ---
-menu = st.sidebar.radio("Navigation", ["🏠 Home", "📊 Synthetic Data", "⚙️ MDP Optimization", "⚖️ Nash Equilibrium", "🚚 Delivery Routes", "🔗 Supply Chain Model"])
+# ---------------------- Sidebar Navigation ---------------------- #
+menu = st.sidebar.radio("Navigation", 
+                        ["🏠 Home", "📊 Synthetic Data", "⚙️ MDP Optimization", "⚖️ Nash Equilibrium", "🚚 Delivery Routes", "📉 Supply Chain Model"])
 
-# --- HOME PAGE ---
+# ---------------------- Home Page ---------------------- #
 if menu == "🏠 Home":
-    st.title("📦 Supply Chain Management System")
-    st.subheader("Optimizing Logistics & Distribution Using AI")
+    st.title("📦 Supply Chain Optimization System")
     st.markdown("""
-    - **Using MDP, POMDP & Nash Equilibrium** to optimize supply chain decisions.
-    - Dynamic simulations for real-time decision-making under uncertainty.
-    - Interactive visualizations & data-driven optimizations.
-    
-    👉 Navigate using the sidebar!
+    Welcome to the **Supply Chain Optimization System**!  
+    🚀 **Key Features:**  
+    - **Markov Decision Process (MDP):** Optimize inventory and shipping.  
+    - **Partially Observable MDP (POMDP):** Handle uncertainty in supply & demand.  
+    - **Nash Equilibrium:** Manage interactions between suppliers & distributors.  
+    - **Dynamic Route Visualization:** Explore optimal delivery paths.  
     """)
 
-# --- SYNTHETIC DATA GENERATION ---
-if menu == "📊 Synthetic Data":
+# ---------------------- Synthetic Data Generation ---------------------- #
+elif menu == "📊 Synthetic Data":
     st.header("📊 Synthetic Supply Chain Data")
-    
+
     @st.cache_data
     def generate_synthetic_data(num_entries=500):
         np.random.seed(42)
@@ -36,7 +39,7 @@ if menu == "📊 Synthetic Data":
         warehouses = ["Warehouse_1", "Warehouse_2", "Warehouse_3"]
         retailers = ["Retailer_X", "Retailer_Y", "Retailer_Z"]
         customers = ["Customer_1", "Customer_2", "Customer_3"]
-        
+
         data = []
         for _ in range(num_entries):
             entry = {
@@ -51,19 +54,21 @@ if menu == "📊 Synthetic Data":
                 "Order_Quantity": np.random.randint(10, 200),
             }
             data.append(entry)
-        
+
         return pd.DataFrame(data)
 
     df = generate_synthetic_data()
     st.dataframe(df, use_container_width=True)
 
-# --- SUPPLY CHAIN OPTIMIZATION USING MDP ---
-if menu == "⚙️ MDP Optimization":
+# ---------------------- MDP Optimization ---------------------- #
+elif menu == "⚙️ MDP Optimization":
     st.header("⚙️ Real-Time Supply Chain Policy Optimization")
-    
+
+    # Define Supply Chain Elements
     states = ['Supplier', 'Warehouse', 'Retailer', 'Customer']
     actions = ['Order', 'Ship', 'Hold']
 
+    # Transition Probabilities
     transition_probs = {
         ('Supplier', 'Order'): {'Warehouse': 0.8, 'Supplier': 0.2},
         ('Warehouse', 'Ship'): {'Retailer': 0.7, 'Warehouse': 0.3},
@@ -72,6 +77,7 @@ if menu == "⚙️ MDP Optimization":
         ('Retailer', 'Hold'): {'Retailer': 1.0},
     }
 
+    # Rewards (Cost Optimization)
     rewards = {
         ('Supplier', 'Order'): -2,
         ('Warehouse', 'Ship'): -1,
@@ -80,45 +86,71 @@ if menu == "⚙️ MDP Optimization":
         ('Retailer', 'Hold'): -0.2,
     }
 
+    # Value Iteration Function
     def value_iteration(states, actions, transition_probs, rewards, gamma=0.9, theta=0.0001):
         V = {s: 0 for s in states}
         policy = {s: random.choice(actions) for s in states[:-1]}
+
         while True:
             delta = 0
             for s in states[:-1]:
-                max_value, best_action = float('-inf'), None
+                max_value = float('-inf')
+                best_action = None
+
                 for a in actions:
                     if (s, a) in transition_probs:
                         expected_value = sum(p * (rewards.get((s, a), 0) + gamma * V[s_next])
                                              for s_next, p in transition_probs[(s, a)].items())
+
                         if expected_value > max_value:
-                            max_value, best_action = expected_value, a
+                            max_value = expected_value
+                            best_action = a
+
                 delta = max(delta, abs(V[s] - max_value))
-                V[s], policy[s] = max_value, best_action
+                V[s] = max_value
+                policy[s] = best_action
+
             if delta < theta:
                 break
+
         return policy, V
 
-    optimal_policy, _ = value_iteration(states, actions, transition_probs, rewards)
+    # Run Value Iteration
+    optimal_policy, optimal_values = value_iteration(states, actions, transition_probs, rewards)
+
+    st.write("### 🔄 Optimized Supply Chain Policy")
     st.json(optimal_policy)
 
-# --- MULTI-AGENT NASH EQUILIBRIUM ---
-if menu == "⚖️ Nash Equilibrium":
+# ---------------------- Nash Equilibrium ---------------------- #
+elif menu == "⚖️ Nash Equilibrium":
     st.header("⚖️ Multi-Agent Strategy Using Nash Equilibrium")
-    
+
     supplier_payoff = np.array([[3, -1], [2, 1]])
     distributor_payoff = np.array([[2, 1], [-1, 3]])
     game = nash.Game(supplier_payoff, distributor_payoff)
     equilibria = list(game.support_enumeration())
-    
-    formatted_equilibria = [{"Supplier Strategy": np.round(eq[0], 2).tolist(), "Distributor Strategy": np.round(eq[1], 2).tolist()} for eq in equilibria]
+
+    formatted_equilibria = []
+    for eq in equilibria:
+        supplier_strategy = f"Supplier: {np.round(eq[0], 2)}"
+        distributor_strategy = f"Distributor: {np.round(eq[1], 2)}"
+        formatted_equilibria.append({"Supplier Strategy": supplier_strategy, "Distributor Strategy": distributor_strategy})
+
     st.table(formatted_equilibria)
 
-# --- DELIVERY ROUTE VISUALIZATION ---
-if menu == "🚚 Delivery Routes":
-    st.header("🚚 Optimal Delivery Routes Visualization")
-    
-    G = nx.DiGraph()
+# ---------------------- Delivery Routes ---------------------- #
+elif menu == "🚚 Delivery Routes":
+    st.header("🚚 Interactive Optimal Delivery Route")
+
+    # Interactive PyVis Graph
+    net = Network(height="500px", width="100%", directed=True, bgcolor="#222222", font_color="white")
+
+    # Define Supply Chain Nodes
+    nodes = ["Supplier", "Warehouse_A", "Warehouse_B", "Retailer_A", "Retailer_B", "Customer"]
+    for node in nodes:
+        net.add_node(node, label=node, color='lightblue')
+
+    # Define Edges with Costs
     edges = [
         ("Supplier", "Warehouse_A", 3),
         ("Supplier", "Warehouse_B", 4),
@@ -128,25 +160,17 @@ if menu == "🚚 Delivery Routes":
         ("Retailer_B", "Customer", 2),
     ]
 
-    for u, v, d in edges:
-        G.add_edge(u, v, weight=d)
-    
-    selected_source = st.selectbox("📦 Select Source", [e[0] for e in edges])
-    selected_destination = st.selectbox("🎯 Select Destination", [e[1] for e in edges])
-    
-    shortest_path = nx.shortest_path(G, source=selected_source, target=selected_destination, weight='weight')
-    edge_x, edge_y = zip(*[(u, v) for u, v, _ in edges])
-    fig = go.Figure(data=[go.Scatter(x=edge_x, y=edge_y, mode='markers+lines', marker=dict(size=10, color='blue'))])
-    st.plotly_chart(fig)
+    for u, v, cost in edges:
+        net.add_edge(u, v, label=f"{cost} days")
 
-# --- SUPPLY CHAIN MODEL NETWORK ---
-if menu == "🔗 Supply Chain Model":
-    st.header("🔗 Supply Chain Transition Model")
-    G = nx.DiGraph()
-    for (s, a), transitions in transition_probs.items():
-        for s_next in transitions:
-            G.add_edge(s, s_next, label=f'{a} ({transitions[s_next]:.2f})')
-    st.graphviz_chart(nx.nx_agraph.to_agraph(G).to_string())
+    # Save and display
+    net.show("routes.html")
+    st.components.v1.html(open("routes.html", "r").read(), height=600)
+
+# ---------------------- Supply Chain Model ---------------------- #
+elif menu == "📉 Supply Chain Model":
+    st.header("📉 Supply Chain Transition Model")
+    st.image("supply_chain_diagram.png", caption="Supply Chain Model")
 
 # import streamlit as st
 # import pandas as pd
