@@ -342,22 +342,57 @@ def transition_visualization_section():
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, ax=ax)
     ax.set_title("Supply Chain Transition Model (MDP)")
     st.pyplot(fig)
-
 def pomdp_simulation_section():
     st.header("POMDP Simulation")
     st.write("Initial Belief State:")
     st.write(initial_belief_state)
+
+    # User inputs for action & observation
     action = st.selectbox("Select Action", pomdp_actions)
     observation = st.selectbox("Select Observation", pomdp_observations)
+
+    # Update belief based on user inputs
     updated_belief = update_belief(initial_belief_state, action, observation)
-    st.write("Updated Belief State:")
-    st.write(updated_belief)
+    st.markdown("**Updated Belief State:**")
+    # Convert dict -> DataFrame for a neat table
+    updated_belief_df = pd.DataFrame(list(updated_belief.items()), columns=["State", "Belief Probability"])
+    st.table(updated_belief_df)
+
+    # Run POMDP Value Iteration on button click
     if st.button("Run POMDP Value Iteration"):
-        policy, values = pomdp_value_iteration(pomdp_states, pomdp_actions, pomdp_transition_probs, observation_probs, pomdp_rewards)
-        st.write("Optimal POMDP Policy:")
-        st.write(policy)
-        st.write("State Values:")
-        st.write(values)
+        policy, values = pomdp_value_iteration(
+            pomdp_states,
+            pomdp_actions,
+            pomdp_transition_probs,
+            observation_probs,
+            pomdp_rewards
+        )
+
+        # Display the policy in table format
+        st.markdown("**Optimal POMDP Policy:**")
+        policy_df = pd.DataFrame(list(policy.items()), columns=["State", "Action"])
+        st.table(policy_df)
+
+        # Display the value function in table format
+        st.markdown("**State Values:**")
+        values_df = pd.DataFrame(list(values.items()), columns=["State", "Value"])
+        st.table(values_df)
+
+# def pomdp_simulation_section():
+#     st.header("POMDP Simulation")
+#     st.write("Initial Belief State:")
+#     st.write(initial_belief_state)
+#     action = st.selectbox("Select Action", pomdp_actions)
+#     observation = st.selectbox("Select Observation", pomdp_observations)
+#     updated_belief = update_belief(initial_belief_state, action, observation)
+#     st.write("Updated Belief State:")
+#     st.write(updated_belief)
+#     if st.button("Run POMDP Value Iteration"):
+#         policy, values = pomdp_value_iteration(pomdp_states, pomdp_actions, pomdp_transition_probs, observation_probs, pomdp_rewards)
+#         st.write("Optimal POMDP Policy:")
+#         st.write(policy)
+#         st.write("State Values:")
+#         st.write(values)
 
 def nash_equilibrium_section():
     st.header("Nash Equilibrium Analysis")
