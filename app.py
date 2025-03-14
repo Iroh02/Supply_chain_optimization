@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import random
 import nashpy as nash
-
+import seaborn as sns
 # =============================================================================
 # Synthetic Data Generation
 # =============================================================================
@@ -393,38 +393,6 @@ def pomdp_simulation_section():
         st.table(values_df)
 
 
-# def pomdp_simulation_section():
-#     st.header("POMDP Simulation")
-#     st.write("Initial Belief State:")
-#     st.write(initial_belief_state)
-#     action = st.selectbox("Select Action", pomdp_actions)
-#     observation = st.selectbox("Select Observation", pomdp_observations)
-#     updated_belief = update_belief(initial_belief_state, action, observation)
-#     st.write("Updated Belief State:")
-#     st.write(updated_belief)
-#     if st.button("Run POMDP Value Iteration"):
-#         policy, values = pomdp_value_iteration(pomdp_states, pomdp_actions, pomdp_transition_probs, observation_probs, pomdp_rewards)
-#         st.write("Optimal POMDP Policy:")
-#         st.write(policy)
-#         st.write("State Values:")
-#         st.write(values)
-
-# def nash_equilibrium_section():
-#     st.header("Nash Equilibrium Analysis")
-#     equilibria = nash_equilibrium_analysis()
-#     for i, eq in enumerate(equilibria):
-#         st.write(f"Equilibrium {i+1}:")
-#         st.write("Supplier Strategy:", eq[0])
-#         st.write("Distributor Strategy:", eq[1])
-#     if equilibria:
-#         chosen_eq = equilibria[0]
-#         supplier_strategy = chosen_eq[0]
-#         distributor_strategy = chosen_eq[1]
-#         order_policy, warehouse_policy, shipping_policy = adjust_supply_chain_policy(supplier_strategy, distributor_strategy)
-#         st.subheader("Supply Chain Policy Adjustments Based on Nash Equilibrium")
-#         st.write("Supplier Order Policy:", order_policy)
-#         st.write("Warehouse Inventory Policy:", warehouse_policy)
-#         st.write("Shipping & Distribution Policy:", shipping_policy)
 def nash_equilibrium_section():
     st.header("Nash Equilibrium Analysis")
 
@@ -461,6 +429,7 @@ def nash_equilibrium_section():
         # Display tables
         st.markdown("**Supplier Strategy**")
         st.table(supplier_df)
+
         st.markdown("**Distributor Strategy**")
         st.table(distributor_df)
 
@@ -488,6 +457,104 @@ def nash_equilibrium_section():
             "Decision": [order_policy, warehouse_policy, shipping_policy]
         })
         st.table(adjustments_df)
+
+        # ─────────────────────────────────────────────────────────────────
+        # VISUALIZING IMPROVEMENTS FROM THE UPDATED POLICY (using Seaborn)
+        # ─────────────────────────────────────────────────────────────────
+        st.markdown("### Visualization of Policy Improvement")
+
+        # Example: Compare a performance metric (e.g., cost, profit, or utility)
+        # between the old policy and the new (Nash-based) policy.
+        # In a real app, you'd compute or simulate these metrics. 
+        # Here, we just mock up some random data.
+
+        old_performance_supplier = np.random.uniform(1, 5)  # e.g. old payoff for supplier
+        old_performance_distributor = np.random.uniform(1, 5)  # old payoff for distributor
+        new_performance_supplier = old_performance_supplier + np.random.uniform(0.5, 2.0)  # improved payoff
+        new_performance_distributor = old_performance_distributor + np.random.uniform(0.5, 2.0)
+
+        improvement_df = pd.DataFrame({
+            "Agent": ["Supplier", "Distributor"],
+            "Old Policy": [old_performance_supplier, old_performance_distributor],
+            "New (Nash) Policy": [new_performance_supplier, new_performance_distributor]
+        })
+
+        st.markdown("**Performance Comparison (Example)**")
+        st.dataframe(improvement_df.style.format(precision=2))
+
+        # Melt the DataFrame so we can plot both old/new as separate bars with Seaborn
+        improvement_melted = improvement_df.melt(id_vars="Agent", 
+                                                 var_name="Policy", 
+                                                 value_name="Performance")
+
+        fig, ax = plt.subplots(figsize=(6, 4))
+        sns.barplot(data=improvement_melted, x="Agent", y="Performance", hue="Policy", ax=ax)
+        ax.set_title("Comparison of Old vs. New Policy Performance")
+        ax.set_ylabel("Performance (Example Units)")
+        st.pyplot(fig)
+# def nash_equilibrium_section():
+#     st.header("Nash Equilibrium Analysis")
+
+#     # Define more descriptive labels for each player's actions
+#     supplier_labels = ["High Supply", "Low Supply"]
+#     distributor_labels = ["High Demand", "Low Demand"]
+
+#     # Calculate all equilibria
+#     equilibria = nash_equilibrium_analysis()
+
+#     if not equilibria:
+#         st.warning("No Nash equilibria found with the current payoff matrices.")
+#         return
+
+#     st.markdown("### All Equilibria Found")
+
+#     # Display each equilibrium with labeled tables
+#     for i, eq in enumerate(equilibria):
+#         st.subheader(f"Equilibrium {i+1}")
+#         # eq is typically a tuple: (supplier_strategy, distributor_strategy)
+#         supplier_strat = eq[0]
+#         distributor_strat = eq[1]
+
+#         # Convert each strategy to a DataFrame for a neat table
+#         supplier_df = pd.DataFrame({
+#             "Supplier Action": supplier_labels,
+#             "Probability": supplier_strat
+#         })
+#         distributor_df = pd.DataFrame({
+#             "Distributor Action": distributor_labels,
+#             "Probability": distributor_strat
+#         })
+
+#         # Display tables
+#         st.markdown("**Supplier Strategy**")
+#         st.table(supplier_df)
+#         st.markdown("**Distributor Strategy**")
+#         st.table(distributor_df)
+
+#     # Let user pick which equilibrium to apply
+#     st.markdown("### Apply an Equilibrium to Update Policy")
+#     eq_options = [f"Equilibrium {i+1}" for i in range(len(equilibria))]
+#     selected_eq_index = st.selectbox("Select which Equilibrium to Apply", range(len(equilibria)),
+#                                      format_func=lambda x: eq_options[x])
+
+#     if st.button("Apply Selected Equilibrium"):
+#         chosen_eq = equilibria[selected_eq_index]
+#         supplier_strategy = chosen_eq[0]
+#         distributor_strategy = chosen_eq[1]
+
+#         # Adjust the supply chain policy based on the chosen equilibrium
+#         order_policy, warehouse_policy, shipping_policy = adjust_supply_chain_policy(
+#             supplier_strategy, 
+#             distributor_strategy
+#         )
+
+#         st.subheader("Supply Chain Policy Adjustments Based on Selected Nash Equilibrium")
+#         # Show these in a table for clarity
+#         adjustments_df = pd.DataFrame({
+#             "Policy Aspect": ["Supplier Order Policy", "Warehouse Inventory Policy", "Shipping & Distribution Policy"],
+#             "Decision": [order_policy, warehouse_policy, shipping_policy]
+#         })
+#         st.table(adjustments_df)
 
 def policy_update_section():
     st.header("Update MDP Policy with Nash Equilibrium")
