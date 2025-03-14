@@ -823,16 +823,124 @@ def policy_update_section():
                                          columns=["State", "Action"])
         st.table(updated_policy_df)
 
+# def route_visualization_section():
+#     st.header("Optimal Delivery Route Visualization")
+#     nodes = ["Supplier", "Warehouse_A", "Warehouse_B", "Retailer_A", "Retailer_B", "Customer"]
+#     source = st.selectbox("Select Source", nodes, index=0)
+#     destination = st.selectbox("Select Destination", nodes, index=len(nodes)-1)
+#     fig, path, _ = plot_optimal_route(source, destination)
+#     if fig:
+#         st.pyplot(fig)
+#         st.write("Optimal Route:", " -> ".join(path))
 def route_visualization_section():
-    st.header("Optimal Delivery Route Visualization")
+    st.header("Optimal Delivery Route Visualization (Interactive)")
+
+    # Define the nodes and a fixed layout for them
     nodes = ["Supplier", "Warehouse_A", "Warehouse_B", "Retailer_A", "Retailer_B", "Customer"]
+    # You can tweak these (x, y) coordinates for a more pleasing layout
+    pos = {
+        "Supplier":      (0, 0),
+        "Warehouse_A":   (2, 1),
+        "Warehouse_B":   (2, -1),
+        "Retailer_A":    (4, 1),
+        "Retailer_B":    (4, -1),
+        "Customer":      (6, 0)
+    }
+
+    # Define edges (routes) with associated cost
+    edges = [
+        ("Supplier", "Warehouse_A", {"cost": 3}),
+        ("Supplier", "Warehouse_B", {"cost": 4}),
+        ("Warehouse_A", "Retailer_A", {"cost": 2}),
+        ("Warehouse_B", "Retailer_B", {"cost": 3}),
+        ("Retailer_A", "Customer",   {"cost": 1}),
+        ("Retailer_B", "Customer",   {"cost": 2}),
+    ]
+
+    # Build a simple graph (we can still use NetworkX for pathfinding)
+    G = nx.Graph()
+    for node in nodes:
+        G.add_node(node)
+    for u, v, d in edges:
+        G.add_edge(u, v, cost=d["cost"])
+
+    # User picks source & destination
     source = st.selectbox("Select Source", nodes, index=0)
     destination = st.selectbox("Select Destination", nodes, index=len(nodes)-1)
-    fig, path, _ = plot_optimal_route(source, destination)
-    if fig:
-        st.pyplot(fig)
-        st.write("Optimal Route:", " -> ".join(path))
 
+    # Try to find the shortest path
+    try:
+        shortest_path = nx.shortest_path(G, source=source, target=destination, weight="cost")
+    except nx.NetworkXNoPath:
+        st.error("No path exists between the selected source and destination.")
+        return
+
+    # Convert the path into a set of edges for easy highlighting
+    path_edges = set(zip(shortest_path, shortest_path[1:]))
+
+    # Prepare Plotly figure
+    fig = go.Figure()
+
+    # 1) Draw all edges as line segments
+    for u, v, d in edges:
+        x0, y0 = pos[u]
+        x1, y1 = pos[v]
+
+        # Check if this edge is part of the shortest path
+        if (u, v) in path_edges or (v, u) in path_edges:
+            color = "red"
+            width = 4
+        else:
+            color = "gray"
+            width = 2
+
+        fig.add_trace(
+            go.Scatter(
+                x=[x0, x1],
+                y=[y0, y1],
+                mode="lines",
+                line=dict(color=color, width=width),
+                hoverinfo="none"  # We'll rely on node hover
+            )
+        )
+
+    # 2) Draw the nodes
+    node_x = []
+    node_y = []
+    node_names = []
+    for node in nodes:
+        x, y = pos[node]
+        node_x.append(x)
+        node_y.append(y)
+        node_names.append(node)
+
+    fig.add_trace(
+        go.Scatter(
+            x=node_x,
+            y=node_y,
+            mode="markers+text",
+            text=node_names,
+            textposition="top center",
+            marker=dict(size=20, color="lightblue", line=dict(width=2, color="darkblue")),
+            hovertext=node_names,
+            hoverinfo="text"
+        )
+    )
+
+    # Update layout for a cleaner look
+    fig.update_layout(
+        title=f"Optimal Route: {source} → {destination}",
+        showlegend=False,
+        xaxis=dict(showgrid=False, zeroline=False, visible=False),
+        yaxis=dict(showgrid=False, zeroline=False, visible=False),
+        margin=dict(l=40, r=40, t=50, b=40),
+        height=500
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Display the actual route text
+    st.write("**Optimal Route:**", " → ".join(shortest_path))
 def simulation_section():
     st.header("Real-Time Decision-Making Simulation")
     duration = st.slider("Simulation Duration (time steps)", 50, 200, 100, step=10)
@@ -847,11 +955,11 @@ st.title("Supply Chain Optimization ")
 section = st.sidebar.selectbox(
     "Select Section", 
     [
-        "Synthetic Data Generation", 
-        "MDP Optimization", 
+        "Dashboard", 
         "Transition Model Visualization", 
         "POMDP Simulation", 
         "Nash Equilibrium Analysis", 
+        "MDP Optimization", 
         "MDP Policy Update using Nash", 
         "Optimal Delivery Route Visualization",
         "Real-Time Simulation"
