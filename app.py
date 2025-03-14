@@ -6,7 +6,7 @@ import networkx as nx
 import random
 import nashpy as nash
 
-st.set_option('deprecation.showPyplotGlobalUse', False)
+# st.set_option('deprecation.showPyplotGlobalUse', False)
 
 # =============================================================================
 # Synthetic Data Generation
