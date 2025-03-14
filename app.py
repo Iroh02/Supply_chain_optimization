@@ -172,34 +172,34 @@ def pomdp_value_iteration_silent(states, actions, transition_probs, observation_
             break
     return policy, V
 
-# def pomdp_value_iteration(states, actions, transition_probs, observation_probs, rewards, gamma=0.9, theta=0.01, max_iterations=100):
-#     V = {s: 0 for s in states}
-#     policy = {s: None for s in states}
-#     for iteration in range(max_iterations):
-#         delta = 0
-#         for s in states:
-#             max_value = float('-inf')
-#             best_action = None
-#             for a in actions:
-#                 if (s, a) in transition_probs:
-#                     expected_value = 0
-#                     for s_next, p in transition_probs[(s, a)].items():
-#                         r = rewards.get((s, a), -10)
-#                         expected_value += p * (r + gamma * V.get(s_next, 0))
-#                     if expected_value > max_value:
-#                         max_value = expected_value
-#                         best_action = a
-#             if best_action is None:
-#                 st.write(f"WARNING: No valid action found for {s}. Assigning default action.")
-#                 best_action = np.random.choice(actions)
-#             delta = max(delta, abs(V[s] - max_value))
-#             V[s] = max_value
-#             policy[s] = best_action
-#         st.write(f"Iteration {iteration+1}: Max Value Change = {delta:.6f}")
-#         if delta < theta:
-#             st.write("Converged!")
-#             break
-#     return policy, V
+def pomdp_value_iteration(states, actions, transition_probs, observation_probs, rewards, gamma=0.9, theta=0.01, max_iterations=100):
+    V = {s: 0 for s in states}
+    policy = {s: None for s in states}
+    for iteration in range(max_iterations):
+        delta = 0
+        for s in states:
+            max_value = float('-inf')
+            best_action = None
+            for a in actions:
+                if (s, a) in transition_probs:
+                    expected_value = 0
+                    for s_next, p in transition_probs[(s, a)].items():
+                        r = rewards.get((s, a), -10)
+                        expected_value += p * (r + gamma * V.get(s_next, 0))
+                    if expected_value > max_value:
+                        max_value = expected_value
+                        best_action = a
+            if best_action is None:
+                st.write(f"WARNING: No valid action found for {s}. Assigning default action.")
+                best_action = np.random.choice(actions)
+            delta = max(delta, abs(V[s] - max_value))
+            V[s] = max_value
+            policy[s] = best_action
+        st.write(f"Iteration {iteration+1}: Max Value Change = {delta:.6f}")
+        if delta < theta:
+            st.write("Converged!")
+            break
+    return policy, V
 
 # =============================================================================
 # Nash Equilibrium & Policy Adjustment Components
