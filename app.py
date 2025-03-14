@@ -269,7 +269,7 @@ def synthetic_data_section():
     st.download_button("Download CSV", csv, "supply_chain_synthetic_data.csv", "text/csv")
 
 def mdp_optimization_section():
-    st.header("MDP Optimization - Value Iteration (Dynamic)")
+    st.header("MDP Optimization - Value Iteration")
     gamma = st.slider("Discount Factor (gamma)", 0.0, 1.0, 0.9, 0.01)
     theta = st.slider("Convergence Threshold (theta)", 1e-6, 1e-1, 1e-4, format="%.1e")
     max_iters = st.slider("Max Iterations", 1, 100, 50)
@@ -407,7 +407,7 @@ def simulation_section():
 # =============================================================================
 # Main App Layout
 # =============================================================================
-st.title("Supply Chain Optimization Dashboard")
+st.title("Supply Chain Optimization ")
 section = st.sidebar.selectbox(
     "Select Section", 
     [
