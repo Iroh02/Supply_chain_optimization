@@ -55,7 +55,7 @@ mdp_rewards = {
 }
 
 # ---- DYNAMIC Value Iteration to show intermediate steps ----
-def value_iteration_dynamic(states, actions, transition_probs, rewards, gamma=0.9, theta=0.0001, max_iters=50):
+def value_iteration(states, actions, transition_probs, rewards, gamma=0.9, theta=0.0001, max_iters=50):
     """
     Returns a list of tuples (iteration_index, policy, value_function)
     so we can display the changes step-by-step.
