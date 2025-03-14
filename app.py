@@ -141,31 +141,68 @@ elif menu == "⚖️ Nash Equilibrium":
 # ---------------------- Delivery Routes ---------------------- #
 elif menu == "🚚 Delivery Routes":
     st.header("🚚 Interactive Optimal Delivery Route")
+ 
+    # Create the PyVis graph
+    def create_pyvis_graph(G):
+        net = Network(height="500px", width="100%", directed=True, notebook=False)
+        
+        for node in G.nodes:
+            net.add_node(node, label=node, color="lightblue")
+    
+        for edge in G.edges:
+            net.add_edge(edge[0], edge[1])
+    
+        return net
+    
+    # Example: Create the network
+    G = nx.DiGraph()
+    G.add_edges_from([
+        ("Supplier", "Warehouse_A"),
+        ("Supplier", "Warehouse_B"),
+        ("Warehouse_A", "Retailer_A"),
+        ("Warehouse_B", "Retailer_B"),
+        ("Retailer_A", "Customer"),
+        ("Retailer_B", "Customer"),
+    ])
+    
+    # Generate PyVis graph
+    net = create_pyvis_graph(G)
+    
+    # Create a temporary file to save the graph
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".html") as tmp_file:
+        html_path = tmp_file.name
+        net.write_html(html_path)
+    
+    # Display the graph in Streamlit
+    st.components.v1.html(open(html_path, "r", encoding="utf-8").read(), height=550, scrolling=True)
+    
+    # Remove the temporary file after rendering
+    os.remove(html_path)
 
-    # Interactive PyVis Graph
-    net = Network(height="500px", width="100%", directed=True, bgcolor="#222222", font_color="white")
+    # # Interactive PyVis Graph
+    # net = Network(height="500px", width="100%", directed=True, bgcolor="#222222", font_color="white")
 
-    # Define Supply Chain Nodes
-    nodes = ["Supplier", "Warehouse_A", "Warehouse_B", "Retailer_A", "Retailer_B", "Customer"]
-    for node in nodes:
-        net.add_node(node, label=node, color='lightblue')
+    # # Define Supply Chain Nodes
+    # nodes = ["Supplier", "Warehouse_A", "Warehouse_B", "Retailer_A", "Retailer_B", "Customer"]
+    # for node in nodes:
+    #     net.add_node(node, label=node, color='lightblue')
 
-    # Define Edges with Costs
-    edges = [
-        ("Supplier", "Warehouse_A", 3),
-        ("Supplier", "Warehouse_B", 4),
-        ("Warehouse_A", "Retailer_A", 2),
-        ("Warehouse_B", "Retailer_B", 3),
-        ("Retailer_A", "Customer", 1),
-        ("Retailer_B", "Customer", 2),
-    ]
+    # # Define Edges with Costs
+    # edges = [
+    #     ("Supplier", "Warehouse_A", 3),
+    #     ("Supplier", "Warehouse_B", 4),
+    #     ("Warehouse_A", "Retailer_A", 2),
+    #     ("Warehouse_B", "Retailer_B", 3),
+    #     ("Retailer_A", "Customer", 1),
+    #     ("Retailer_B", "Customer", 2),
+    # ]
 
-    for u, v, cost in edges:
-        net.add_edge(u, v, label=f"{cost} days")
+    # for u, v, cost in edges:
+    #     net.add_edge(u, v, label=f"{cost} days")
 
-    # Save and display
-    net.show("routes.html")
-    st.components.v1.html(open("routes.html", "r").read(), height=600)
+    # # Save and display
+    # net.show("routes.html")
+    # st.components.v1.html(open("routes.html", "r").read(), height=600)
 
 # ---------------------- Supply Chain Model ---------------------- #
 elif menu == "📉 Supply Chain Model":
