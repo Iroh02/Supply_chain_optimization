@@ -1,0 +1,8 @@
+streamlit
+networkx
+matplotlib
+numpy
+pandas
+pyngrok
+nashpy
+random
