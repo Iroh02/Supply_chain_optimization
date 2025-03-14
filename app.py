@@ -4,17 +4,15 @@ import pandas as pd
 import numpy as np
 import networkx as nx
 import plotly.graph_objects as go
-from pyvis.network import Network
 import random
 import nashpy as nash
-import matplotlib.pyplot as plt
 
 # ---------------------- Streamlit Page Config ---------------------- #
 st.set_page_config(page_title="📦 Supply Chain Optimization", layout="wide")
 
 # ---------------------- Sidebar Navigation ---------------------- #
-menu = st.sidebar.radio("Navigation", 
-                        ["🏠 Home", "📊 Synthetic Data", "⚙️ MDP Optimization", "⚖️ Nash Equilibrium", "🚚 Delivery Routes", "📉 Supply Chain Model"])
+menu = st.sidebar.radio("📌 Navigation", 
+                        ["🏠 Home", "📊 Synthetic Data", "⚙️ MDP Optimization", "⚖️ Nash Equilibrium", "🚚 Delivery Routes"])
 
 # ---------------------- Home Page ---------------------- #
 if menu == "🏠 Home":
@@ -62,7 +60,7 @@ elif menu == "📊 Synthetic Data":
 
 # ---------------------- MDP Optimization ---------------------- #
 elif menu == "⚙️ MDP Optimization":
-    st.header("⚙️ Real-Time Supply Chain Policy Optimization")
+    st.header("⚙️ Supply Chain Policy Optimization Using MDP")
 
     # Define Supply Chain Elements
     states = ['Supplier', 'Warehouse', 'Retailer', 'Customer']
@@ -116,7 +114,7 @@ elif menu == "⚙️ MDP Optimization":
         return policy, V
 
     # Run Value Iteration
-    optimal_policy, optimal_values = value_iteration(states, actions, transition_probs, rewards)
+    optimal_policy, _ = value_iteration(states, actions, transition_probs, rewards)
 
     st.write("### 🔄 Optimized Supply Chain Policy")
     st.json(optimal_policy)
@@ -130,84 +128,55 @@ elif menu == "⚖️ Nash Equilibrium":
     game = nash.Game(supplier_payoff, distributor_payoff)
     equilibria = list(game.support_enumeration())
 
-    formatted_equilibria = []
-    for eq in equilibria:
-        supplier_strategy = f"Supplier: {np.round(eq[0], 2)}"
-        distributor_strategy = f"Distributor: {np.round(eq[1], 2)}"
-        formatted_equilibria.append({"Supplier Strategy": supplier_strategy, "Distributor Strategy": distributor_strategy})
+    formatted_equilibria = [{"Supplier Strategy": np.round(eq[0], 2), "Distributor Strategy": np.round(eq[1], 2)}
+                            for eq in equilibria]
 
     st.table(formatted_equilibria)
 
 # ---------------------- Delivery Routes ---------------------- #
 elif menu == "🚚 Delivery Routes":
     st.header("🚚 Interactive Optimal Delivery Route")
- 
-    # Create the PyVis graph
-    def create_pyvis_graph(G):
-        net = Network(height="500px", width="100%", directed=True, notebook=False)
-        
-        for node in G.nodes:
-            net.add_node(node, label=node, color="lightblue")
-    
-        for edge in G.edges:
-            net.add_edge(edge[0], edge[1])
-    
-        return net
-    
-    # Example: Create the network
+
+    # Create Graph for Supply Chain
     G = nx.DiGraph()
-    G.add_edges_from([
-        ("Supplier", "Warehouse_A"),
-        ("Supplier", "Warehouse_B"),
-        ("Warehouse_A", "Retailer_A"),
-        ("Warehouse_B", "Retailer_B"),
-        ("Retailer_A", "Customer"),
-        ("Retailer_B", "Customer"),
-    ])
-    
-    # Generate PyVis graph
-    net = create_pyvis_graph(G)
-    
-    # Create a temporary file to save the graph
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".html") as tmp_file:
-        html_path = tmp_file.name
-        net.write_html(html_path)
-    
-    # Display the graph in Streamlit
-    st.components.v1.html(open(html_path, "r", encoding="utf-8").read(), height=550, scrolling=True)
-    
-    # Remove the temporary file after rendering
-    os.remove(html_path)
+    for (s, a), transitions in transition_probs.items():
+        for s_next, prob in transitions.items():
+            G.add_edge(s, s_next, action=a, probability=prob)
 
-    # # Interactive PyVis Graph
-    # net = Network(height="500px", width="100%", directed=True, bgcolor="#222222", font_color="white")
+    # Get positions for nodes
+    pos = nx.spring_layout(G, seed=42)
 
-    # # Define Supply Chain Nodes
-    # nodes = ["Supplier", "Warehouse_A", "Warehouse_B", "Retailer_A", "Retailer_B", "Customer"]
-    # for node in nodes:
-    #     net.add_node(node, label=node, color='lightblue')
+    # Extract node positions
+    node_x, node_y = zip(*pos.values())
 
-    # # Define Edges with Costs
-    # edges = [
-    #     ("Supplier", "Warehouse_A", 3),
-    #     ("Supplier", "Warehouse_B", 4),
-    #     ("Warehouse_A", "Retailer_A", 2),
-    #     ("Warehouse_B", "Retailer_B", 3),
-    #     ("Retailer_A", "Customer", 1),
-    #     ("Retailer_B", "Customer", 2),
-    # ]
+    # Extract edges for plotting
+    edge_x, edge_y, edge_labels = [], [], []
+    for edge in G.edges(data=True):
+        x0, y0 = pos[edge[0]]
+        x1, y1 = pos[edge[1]]
+        edge_x.extend([x0, x1, None])
+        edge_y.extend([y0, y1, None])
+        edge_labels.append(f"{edge[2]['action']} ({edge[2]['probability']:.2f})")
 
-    # for u, v, cost in edges:
-    #     net.add_edge(u, v, label=f"{cost} days")
+    # Create the Network Graph
+    fig = go.Figure()
 
-    # # Save and display
-    # net.show("routes.html")
-    # st.components.v1.html(open("routes.html", "r").read(), height=600)
+    # Add Edges
+    fig.add_trace(go.Scatter(x=edge_x, y=edge_y, line=dict(width=1.5, color='gray'), mode='lines'))
 
-# ---------------------- Supply Chain Model ---------------------- #
-elif menu == "📉 Supply Chain Model":
-    st.header("📉 Supply Chain Transition Model")
-    st.image("supply_chain_diagram.png", caption="Supply Chain Model")
+    # Add Nodes
+    fig.add_trace(go.Scatter(x=node_x, y=node_y, mode='markers+text', text=list(G.nodes),
+                             textposition="top center", marker=dict(size=20, color='lightblue', line=dict(width=2, color='black'))))
+
+    # Add Edge Labels
+    for i, (x, y) in enumerate(zip(edge_x[::3], edge_y[::3])):  
+        fig.add_trace(go.Scatter(x=[x], y=[y], mode="text", text=edge_labels[i], textposition="middle right"))
+
+    # Update Layout
+    fig.update_layout(title="📦 Supply Chain Transition Model", showlegend=False, xaxis=dict(showgrid=False, showticklabels=False),
+                      yaxis=dict(showgrid=False, showticklabels=False))
+
+    st.plotly_chart(fig)
 
 # import streamlit as st
 # import pandas as pd
