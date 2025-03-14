@@ -393,15 +393,19 @@ def simulation_section():
 # Main App Layout
 # =============================================================================
 st.title("Supply Chain Optimization Dashboard")
-section = st.sidebar("Select Section", 
-                           ["Synthetic Data Generation", 
-                            "MDP Optimization", 
-                            "Transition Model Visualization", 
-                            "POMDP Simulation", 
-                            "Nash Equilibrium Analysis", 
-                            "Policy Update with Nash", 
-                            "Optimal Delivery Route Visualization",
-                            "Real-Time Simulation"])
+section = st.sidebar.selectbox(
+    "Select Section", 
+    [
+        "Synthetic Data Generation", 
+        "MDP Optimization", 
+        "Transition Model Visualization", 
+        "POMDP Simulation", 
+        "Nash Equilibrium Analysis", 
+        "Policy Update with Nash", 
+        "Optimal Delivery Route Visualization",
+        "Real-Time Simulation"
+    ]
+)
 
 if section == "Synthetic Data Generation":
     synthetic_data_section()
