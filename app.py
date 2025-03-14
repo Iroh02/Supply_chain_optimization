@@ -456,20 +456,81 @@ def mdp_optimization_section():
 #             st.markdown(f"**Iteration {iter_num}:**")
 #             st.write("Policy:", p)
 #             st.write("State Values:", v)
-
 def transition_visualization_section():
     st.header("Supply Chain Transition Model Visualization")
+
+    # Build the directed graph (DiGraph) from your MDP transitions
     G = nx.DiGraph()
     for (s, a), transitions in mdp_transition_probs.items():
         for s_next, prob in transitions.items():
-            G.add_edge(s, s_next, label=f"{a} ({prob:.2f})")
-    pos = nx.spring_layout(G, seed=42)
-    fig, ax = plt.subplots(figsize=(8, 5))
-    nx.draw(G, pos, with_labels=True, node_size=3000, node_color='lightblue', ax=ax)
-    edge_labels = {(s, s_next): d['label'] for s, s_next, d in G.edges(data=True)}
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, ax=ax)
-    ax.set_title("Supply Chain Transition Model (MDP)")
+            label = f"{a} ({prob:.2f})"
+            G.add_edge(s, s_next, label=label)
+
+    # Define a custom layout for a left-to-right flow
+    # Adjust x-coordinates or y-coordinates as desired
+    pos = {
+        "Supplier":  (0, 0),
+        "Warehouse": (2, 0),
+        "Retailer":  (4, 0),
+        "Customer":  (6, 0)
+    }
+
+    # Define unique colors for each state
+    node_colors = {
+        "Supplier":  "#AED6F1",  # Light blue
+        "Warehouse": "#A9DFBF",  # Light green
+        "Retailer":  "#F9E79F",  # Light yellow
+        "Customer":  "#F5B7B1",  # Light pink
+    }
+
+    # Create a figure
+    fig, ax = plt.subplots(figsize=(9, 3))
+
+    # Draw nodes with custom colors
+    colors = [node_colors.get(n, "lightgray") for n in G.nodes()]
+    nx.draw_networkx_nodes(G, pos, ax=ax, node_size=2000, node_color=colors)
+
+    # Draw labels on nodes
+    nx.draw_networkx_labels(
+        G, pos, ax=ax,
+        font_size=10, font_color="black", font_weight="bold"
+    )
+
+    # Draw edges with arrows, slight curvature, and custom styling
+    nx.draw_networkx_edges(
+        G, pos, ax=ax,
+        arrowstyle='-|>', arrowsize=20,
+        width=2, edge_color='gray',
+        connectionstyle='arc3,rad=0.1'  # Rad > 0 for slight curved edges
+    )
+
+    # Add edge labels
+    edge_labels = {(u, v): d["label"] for u, v, d in G.edges(data=True)}
+    nx.draw_networkx_edge_labels(
+        G, pos, ax=ax,
+        edge_labels=edge_labels, font_size=8, label_pos=0.5
+    )
+
+    # Title and remove axis
+    ax.set_title("Supply Chain Transition Model (MDP)", fontsize=12)
+    ax.set_axis_off()
+
+    # Display the figure in Streamlit
     st.pyplot(fig)
+
+# def transition_visualization_section():
+#     st.header("Supply Chain Transition Model Visualization")
+#     G = nx.DiGraph()
+#     for (s, a), transitions in mdp_transition_probs.items():
+#         for s_next, prob in transitions.items():
+#             G.add_edge(s, s_next, label=f"{a} ({prob:.2f})")
+#     pos = nx.spring_layout(G, seed=42)
+#     fig, ax = plt.subplots(figsize=(8, 5))
+#     nx.draw(G, pos, with_labels=True, node_size=3000, node_color='lightblue', ax=ax)
+#     edge_labels = {(s, s_next): d['label'] for s, s_next, d in G.edges(data=True)}
+#     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, ax=ax)
+#     ax.set_title("Supply Chain Transition Model (MDP)")
+#     st.pyplot(fig)
 def pomdp_simulation_section():
     st.header("POMDP Simulation")
 
