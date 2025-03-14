@@ -111,12 +111,12 @@ def mdp_optimization_section():
     max_iters = st.slider("Max Iterations", 1, 100, 50)
 
     if st.button("Run Value Iteration"):
-        # Call the value_iteration function defined above.
+        # value_iteration returns a list of logs: (iteration_number, policy, value_function)
         logs = value_iteration(mdp_states, mdp_actions, mdp_transition_probs, mdp_rewards,
                                gamma=gamma, theta=theta, max_iters=max_iters)
         st.write(f"**Total Iterations:** {len(logs)}")
         
-        # Extract final iteration's policy and value function.
+        # Extract final iteration's policy and value function
         final_iter, final_policy, final_values = logs[-1]
         st.subheader(f"Converged at Iteration {final_iter}")
         st.write("**Final Optimal Policy:**")
@@ -124,12 +124,13 @@ def mdp_optimization_section():
         st.write("**Final State Values:**")
         st.write(final_values)
         
-        # Optionally, display the step-by-step logs.
+        # Optionally, display step-by-step iteration logs
         st.markdown("### Step-by-Step Iteration Logs")
         for (iter_num, p, v) in logs:
             st.markdown(f"**Iteration {iter_num}:**")
             st.write("Policy:", p)
             st.write("State Values:", v)
+
 
 
 # =============================================================================
