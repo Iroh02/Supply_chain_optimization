@@ -344,21 +344,36 @@ def transition_visualization_section():
     st.pyplot(fig)
 def pomdp_simulation_section():
     st.header("POMDP Simulation")
-    st.write("Initial Belief State:")
-    st.write(initial_belief_state)
 
-    # User inputs for action & observation
+    # --- Display the Initial Belief State as a Table ---
+    st.markdown("**Initial Belief State:**")
+    init_belief_df = pd.DataFrame(
+        list(initial_belief_state.items()),
+        columns=["State", "Belief Probability"]
+    )
+    st.table(init_belief_df)
+
+    # --- Let User Pick Action & Observation ---
     action = st.selectbox("Select Action", pomdp_actions)
     observation = st.selectbox("Select Observation", pomdp_observations)
 
-    # Update belief based on user inputs
-    updated_belief = update_belief(initial_belief_state, action, observation)
-    st.markdown("**Updated Belief State:**")
-    # Convert dict -> DataFrame for a neat table
-    updated_belief_df = pd.DataFrame(list(updated_belief.items()), columns=["State", "Belief Probability"])
-    st.table(updated_belief_df)
+    # --- Update Belief on Button Click ---
+    if st.button("Update Belief"):
+        updated_belief = update_belief(initial_belief_state, action, observation)
+        
+        st.markdown("**Updated Belief State:**")
+        if updated_belief:
+            # Convert dict -> DataFrame for a neat table
+            updated_belief_df = pd.DataFrame(
+                list(updated_belief.items()),
+                columns=["State", "Belief Probability"]
+            )
+            st.table(updated_belief_df)
+        else:
+            st.warning("No matching (state, action) found in observation_probs for the chosen action/observation. "
+                       "The updated belief is empty. Please pick a valid combination or expand observation_probs.")
 
-    # Run POMDP Value Iteration on button click
+    # --- Run POMDP Value Iteration on Button Click ---
     if st.button("Run POMDP Value Iteration"):
         policy, values = pomdp_value_iteration(
             pomdp_states,
@@ -367,7 +382,6 @@ def pomdp_simulation_section():
             observation_probs,
             pomdp_rewards
         )
-
         # Display the policy in table format
         st.markdown("**Optimal POMDP Policy:**")
         policy_df = pd.DataFrame(list(policy.items()), columns=["State", "Action"])
@@ -377,6 +391,7 @@ def pomdp_simulation_section():
         st.markdown("**State Values:**")
         values_df = pd.DataFrame(list(values.items()), columns=["State", "Value"])
         st.table(values_df)
+
 
 # def pomdp_simulation_section():
 #     st.header("POMDP Simulation")
