@@ -317,14 +317,84 @@ def real_time_simulation(duration=100):
 # =============================================================================
 # Streamlit App Sections
 # =============================================================================
+# def synthetic_data_section():
+#     st.header("Synthetic Data Generation")
+#     num_entries = st.slider("Select number of entries", 100, 5000, 1000, step=100)
+#     df = generate_synthetic_data(num_entries)
+#     st.write("Preview of Synthetic Data:")
+#     st.dataframe(df.head())
+#     csv = df.to_csv(index=False).encode('utf-8')
+#     st.download_button("Download CSV", csv, "supply_chain_synthetic_data.csv", "text/csv")
 def synthetic_data_section():
-    st.header("Synthetic Data Generation")
+    # A nice big title for the landing page
+    st.title("Welcome to ACME Supply Chain Management System")
+    
+    # Introductory text explaining the purpose of the app
+    st.markdown("""
+    **ACME Supply Chain Management System** is a comprehensive dashboard designed to help you:
+    
+    - **Generate** synthetic supply chain data (suppliers, warehouses, retailers, customers, etc.)
+    - **Optimize** your supply chain using Markov Decision Processes (MDP)
+    - **Visualize** transitions and routes across your network
+    - **Handle uncertainties** via Partially Observable MDP (POMDP)
+    - **Evaluate strategic interactions** using Nash Equilibria
+    - **Update policies** dynamically based on equilibrium strategies
+    - **Simulate** real-time demand and inventory fluctuations
+    
+    Use the slider below to choose how many synthetic data entries to create, then preview, visualize, or download the dataset.
+    """)
+
+    # --- Synthetic Data Generation ---
+    st.subheader("1) Generate Synthetic Data")
     num_entries = st.slider("Select number of entries", 100, 5000, 1000, step=100)
+
     df = generate_synthetic_data(num_entries)
-    st.write("Preview of Synthetic Data:")
+    st.write("**Preview of Synthetic Data:**")
     st.dataframe(df.head())
+
+    # Provide download button for CSV
     csv = df.to_csv(index=False).encode('utf-8')
     st.download_button("Download CSV", csv, "supply_chain_synthetic_data.csv", "text/csv")
+
+    # --- Data Visualization Dashboard ---
+    st.subheader("2) Data Visualizations")
+
+    # 2a) Bar Chart: Distribution of Suppliers
+    st.markdown("**Distribution of Suppliers**")
+    supplier_count = df["Supplier"].value_counts().reset_index()
+    supplier_count.columns = ["Supplier", "Count"]
+    fig_bar = px.bar(
+        supplier_count, 
+        x="Supplier", 
+        y="Count", 
+        color="Supplier", 
+        title="Supplier Distribution"
+    )
+    st.plotly_chart(fig_bar, use_container_width=True)
+
+    # 2b) Pie Chart: Distribution of Warehouses
+    st.markdown("**Distribution of Warehouses**")
+    warehouse_count = df["Warehouse"].value_counts().reset_index()
+    warehouse_count.columns = ["Warehouse", "Count"]
+    fig_pie = px.pie(
+        warehouse_count, 
+        names="Warehouse", 
+        values="Count", 
+        title="Warehouse Distribution"
+    )
+    st.plotly_chart(fig_pie, use_container_width=True)
+
+    # 2c) Correlation Heatmap of Numeric Features
+    st.markdown("**Correlation Heatmap** (Lead Time, Demand, Inventory, Shipping Cost, Order Quantity)")
+    numeric_cols = ["Lead_Time", "Demand", "Inventory_Level", "Shipping_Cost", "Order_Quantity"]
+    corr = df[numeric_cols].corr()
+    fig_heatmap = px.imshow(
+        corr, 
+        text_auto=True, 
+        aspect="auto", 
+        title="Correlation Heatmap (Numeric Features)"
+    )
+    st.plotly_chart(fig_heatmap, use_container_width=True)
 
 def mdp_optimization_section():
     st.header("MDP Optimization - Value Iteration")
