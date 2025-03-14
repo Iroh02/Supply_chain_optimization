@@ -18,7 +18,6 @@ st.markdown("🔹 **Using MDP, POMDP & Nash Equilibrium to optimize supply chain
 # --- SECTION 1: SYNTHETIC DATA GENERATION ---
 st.header("📊 Synthetic Supply Chain Data")
 
-# Generate Synthetic Data
 @st.cache_data
 def generate_synthetic_data(num_entries=500):
     np.random.seed(42)
@@ -50,13 +49,55 @@ st.dataframe(df.head(), use_container_width=True)
 # --- SECTION 2: SUPPLY CHAIN OPTIMIZATION USING MDP ---
 st.header("⚙️ Real-Time Supply Chain Policy Optimization")
 
+# Define states and actions
+states = ['Supplier', 'Warehouse', 'Retailer', 'Customer']
+actions = ['Order', 'Ship', 'Hold']
+
+# Define transition probabilities
+transition_probs = {
+    ('Supplier', 'Order'): {'Warehouse': 0.8, 'Supplier': 0.2},
+    ('Warehouse', 'Ship'): {'Retailer': 0.7, 'Warehouse': 0.3},
+    ('Retailer', 'Ship'): {'Customer': 0.9, 'Retailer': 0.1},
+    ('Warehouse', 'Hold'): {'Warehouse': 1.0},
+    ('Retailer', 'Hold'): {'Retailer': 1.0},
+}
+
 # User Inputs for Real-Time Adjustments
 lead_time_factor = st.slider("⏳ Adjust Lead Time Impact", 0.5, 2.0, 1.0)
 demand_fluctuation = st.slider("📊 Adjust Demand Fluctuation", 0.5, 2.0, 1.0)
 inventory_sensitivity = st.slider("📦 Adjust Inventory Impact", 0.5, 2.0, 1.0)
 
-# Dynamic Value Iteration Function
-def dynamic_value_iteration(lead_time_factor, demand_fluctuation, inventory_sensitivity):
+# Value Iteration Function
+def value_iteration(states, actions, transition_probs, rewards, gamma=0.9, theta=0.0001):
+    V = {s: 0 for s in states}
+    policy = {s: random.choice(actions) for s in states[:-1]}
+    
+    while True:
+        delta = 0
+        for s in states[:-1]:
+            max_value = float('-inf')
+            best_action = None
+            
+            for a in actions:
+                if (s, a) in transition_probs:
+                    expected_value = sum(p * (rewards.get((s, a), 0) + gamma * V[s_next])
+                                         for s_next, p in transition_probs[(s, a)].items())
+                    
+                    if expected_value > max_value:
+                        max_value = expected_value
+                        best_action = a
+            
+            delta = max(delta, abs(V[s] - max_value))
+            V[s] = max_value
+            policy[s] = best_action
+        
+        if delta < theta:
+            break
+    
+    return policy, V
+
+# Run Value Iteration with User Inputs
+def dynamic_value_iteration():
     modified_rewards = {
         ('Supplier', 'Order'): -2 * lead_time_factor,
         ('Warehouse', 'Ship'): -1 * demand_fluctuation,
@@ -65,18 +106,14 @@ def dynamic_value_iteration(lead_time_factor, demand_fluctuation, inventory_sens
         ('Retailer', 'Hold'): -0.2,
     }
     
-    policy, values = value_iteration(states, actions, transition_probs, modified_rewards)
-    return policy
+    return value_iteration(states, actions, transition_probs, modified_rewards)
 
-# Run Value Iteration with User Inputs
-dynamic_policy = dynamic_value_iteration(lead_time_factor, demand_fluctuation, inventory_sensitivity)
+dynamic_policy, _ = dynamic_value_iteration()
 
 # Display Updated Policy
 st.write("### 🔄 Optimized Policy Based on Adjustments")
 st.json(dynamic_policy)
 
-
-# --- SECTION 3: NASH EQUILIBRIUM FOR MULTI-AGENT DECISIONS ---
 # --- SECTION 3: NASH EQUILIBRIUM FOR MULTI-AGENT DECISIONS ---
 st.header("⚖️ Multi-Agent Strategy Using Nash Equilibrium")
 
@@ -88,22 +125,35 @@ equilibria = list(game.support_enumeration())
 # Format Nash Equilibrium Output
 formatted_equilibria = []
 for eq in equilibria:
-    supplier_strategy = f"Supplier: {np.round(eq[0], 2)}"
-    distributor_strategy = f"Distributor: {np.round(eq[1], 2)}"
-    formatted_equilibria.append({"Supplier Strategy": supplier_strategy, "Distributor Strategy": distributor_strategy})
+    formatted_equilibria.append({"Supplier Strategy": np.round(eq[0], 2).tolist(), 
+                                 "Distributor Strategy": np.round(eq[1], 2).tolist()})
 
 # Display as a Table
 st.write("### Nash Equilibrium Strategies")
 st.table(formatted_equilibria)
 
-st.write(f"**Nash Equilibrium Strategies:** {equilibria}")
-
 # --- SECTION 4: INTERACTIVE DELIVERY ROUTE VISUALIZATION ---
 st.header("🚚 Interactive Optimal Delivery Route")
 
+# Define Graph
+G = nx.DiGraph()
+nodes = ["Supplier", "Warehouse_A", "Warehouse_B", "Retailer_A", "Retailer_B", "Customer"]
+G.add_nodes_from(nodes)
+
+# Add Edges (Routes & Costs)
+edges = [
+    ("Supplier", "Warehouse_A", {"cost": 3}),
+    ("Supplier", "Warehouse_B", {"cost": 4}),
+    ("Warehouse_A", "Retailer_A", {"cost": 2}),
+    ("Warehouse_B", "Retailer_B", {"cost": 3}),
+    ("Retailer_A", "Customer", {"cost": 1}),
+    ("Retailer_B", "Customer", {"cost": 2}),
+]
+G.add_edges_from([(u, v, d) for u, v, d in edges])
+
 # User Selection
-selected_source = st.selectbox("📦 Select Source", ["Supplier", "Warehouse_A", "Warehouse_B"])
-selected_destination = st.selectbox("🎯 Select Destination", ["Retailer_A", "Retailer_B", "Customer"])
+selected_source = st.selectbox("📦 Select Source", nodes)
+selected_destination = st.selectbox("🎯 Select Destination", nodes)
 
 # Compute Shortest Path Based on Selection
 if selected_source and selected_destination:
@@ -124,6 +174,10 @@ if selected_source and selected_destination:
 
     except nx.NetworkXNoPath:
         st.error("⚠️ No available route between the selected locations!")
+
+st.write("---")
+st.write("💡 **Developed for Hackathon: Reasoning & Decision Making Under Uncertainty**")
+
 
 # import streamlit as st
 # import pandas as pd
