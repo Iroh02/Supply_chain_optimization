@@ -54,30 +54,60 @@ mdp_rewards = {
     ('Retailer', 'Ship'): 5,
 }
 
-def value_iteration(states, actions, transition_probs, rewards, gamma=0.9, theta=0.0001):
-    V = {s: 0 for s in states}  
-    policy = {s: random.choice(actions) for s in states[:-1]}  # Exclude terminal state 'Customer'
-    while True:
+# ---- DYNAMIC Value Iteration to show intermediate steps ----
+def value_iteration_dynamic(states, actions, transition_probs, rewards, gamma=0.9, theta=0.0001, max_iters=50):
+    """
+    Returns a list of tuples (iteration_index, policy, value_function)
+    so we can display the changes step-by-step.
+    """
+    # Initialize value function
+    V = {s: 0.0 for s in states}  
+    # Initialize a random policy for non-terminal states
+    policy = {s: random.choice(actions) for s in states if s != 'Customer'}
+
+    iteration_logs = []
+    for i in range(max_iters):
         delta = 0
-        for s in states[:-1]:
+        # Copy for step-by-step updates
+        new_V = V.copy()
+        new_policy = policy.copy()
+
+        for s in states:
+            if s == 'Customer':
+                # Terminal state; skip
+                continue
+            
             max_value = float('-inf')
             best_action = None
+
+            # Evaluate each action from this state
             for a in actions:
                 if (s, a) in transition_probs:
-                    expected_value = sum(
-                        p * (rewards.get((s, a), 0) + gamma * V[s_next])
-                        for s_next, p in transition_probs[(s, a)].items()
-                    )
+                    expected_value = 0.0
+                    for s_next, p in transition_probs[(s, a)].items():
+                        reward = rewards.get((s, a), 0)
+                        expected_value += p * (reward + gamma * V[s_next])
                     if expected_value > max_value:
                         max_value = expected_value
                         best_action = a
+            
+            # Update the value function and policy
+            new_V[s] = max_value
+            new_policy[s] = best_action
             delta = max(delta, abs(V[s] - max_value))
-            V[s] = max_value
-            policy[s] = best_action
+
+        # Overwrite the old V and policy with updated ones
+        V = new_V
+        policy = new_policy
+
+        # Store iteration results
+        iteration_logs.append((i+1, policy.copy(), V.copy()))
+
+        # Convergence check
         if delta < theta:
             break
-    return policy, V
 
+    return iteration_logs
 # =============================================================================
 # POMDP Components for Supply Chain
 # =============================================================================
