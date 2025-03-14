@@ -273,21 +273,61 @@ def mdp_optimization_section():
     gamma = st.slider("Discount Factor (gamma)", 0.0, 1.0, 0.9, 0.01)
     theta = st.slider("Convergence Threshold (theta)", 1e-6, 1e-1, 1e-4, format="%.1e")
     max_iters = st.slider("Max Iterations", 1, 100, 50)
+
     if st.button("Run Value Iteration"):
         logs = value_iteration(mdp_states, mdp_actions, mdp_transition_probs, mdp_rewards,
                                gamma=gamma, theta=theta, max_iters=max_iters)
         st.write(f"**Total Iterations:** {len(logs)}")
+
+        # Extract final iteration's policy and value function
         final_iter, final_policy, final_values = logs[-1]
         st.subheader(f"Converged at Iteration {final_iter}")
-        st.write("**Final Optimal Policy:**")
-        st.write(final_policy)
-        st.write("**Final State Values:**")
-        st.write(final_values)
+
+        # --- Display Final Results ---
+        st.markdown("**Final Optimal Policy:**")
+        # Convert policy dict -> DataFrame for a nicer table
+        final_policy_df = pd.DataFrame(list(final_policy.items()), columns=["State", "Action"])
+        st.table(final_policy_df)
+
+        st.markdown("**Final State Values:**")
+        # Convert values dict -> DataFrame for a nicer table
+        final_values_df = pd.DataFrame(list(final_values.items()), columns=["State", "Value"])
+        st.table(final_values_df)
+
+        # --- Step-by-Step Iteration Logs ---
         st.markdown("### Step-by-Step Iteration Logs")
         for (iter_num, p, v) in logs:
-            st.markdown(f"**Iteration {iter_num}:**")
-            st.write("Policy:", p)
-            st.write("State Values:", v)
+            st.markdown(f"#### Iteration {iter_num}")
+            # Show policy in table form
+            df_policy = pd.DataFrame(list(p.items()), columns=["State", "Action"])
+            st.markdown("**Policy**:")
+            st.table(df_policy)
+            # Show value function in table form
+            df_values = pd.DataFrame(list(v.items()), columns=["State", "Value"])
+            st.markdown("**Value Function**:")
+            st.table(df_values)
+            st.markdown("---")  # A divider line for clarity
+
+# def mdp_optimization_section():
+#     st.header("MDP Optimization - Value Iteration (Dynamic)")
+#     gamma = st.slider("Discount Factor (gamma)", 0.0, 1.0, 0.9, 0.01)
+#     theta = st.slider("Convergence Threshold (theta)", 1e-6, 1e-1, 1e-4, format="%.1e")
+#     max_iters = st.slider("Max Iterations", 1, 100, 50)
+#     if st.button("Run Value Iteration"):
+#         logs = value_iteration(mdp_states, mdp_actions, mdp_transition_probs, mdp_rewards,
+#                                gamma=gamma, theta=theta, max_iters=max_iters)
+#         st.write(f"**Total Iterations:** {len(logs)}")
+#         final_iter, final_policy, final_values = logs[-1]
+#         st.subheader(f"Converged at Iteration {final_iter}")
+#         st.write("**Final Optimal Policy:**")
+#         st.write(final_policy)
+#         st.write("**Final State Values:**")
+#         st.write(final_values)
+#         st.markdown("### Step-by-Step Iteration Logs")
+#         for (iter_num, p, v) in logs:
+#             st.markdown(f"**Iteration {iter_num}:**")
+#             st.write("Policy:", p)
+#             st.write("State Values:", v)
 
 def transition_visualization_section():
     st.header("Supply Chain Transition Model Visualization")
