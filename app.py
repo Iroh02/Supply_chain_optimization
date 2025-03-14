@@ -999,7 +999,7 @@ def simulation_section():
 # =============================================================================
 st.title("Supply Chain Optimization ")
 section = st.sidebar.selectbox(
-    "Select Section", 
+    "Navigation", 
     [
         "Dashboard", 
         "Transition Model Visualization", 
