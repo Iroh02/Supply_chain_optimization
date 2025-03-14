@@ -10,6 +10,28 @@ import nashpy as nash
 # ---------------------- Streamlit Page Config ---------------------- #
 st.set_page_config(page_title="📦 Supply Chain Optimization", layout="wide")
 
+# ---------------------- Define Global Supply Chain Elements ---------------------- #
+states = ['Supplier', 'Warehouse', 'Retailer', 'Customer']
+actions = ['Order', 'Ship', 'Hold']
+
+# Transition Probabilities
+transition_probs = {
+    ('Supplier', 'Order'): {'Warehouse': 0.8, 'Supplier': 0.2},
+    ('Warehouse', 'Ship'): {'Retailer': 0.7, 'Warehouse': 0.3},
+    ('Retailer', 'Ship'): {'Customer': 0.9, 'Retailer': 0.1},
+    ('Warehouse', 'Hold'): {'Warehouse': 1.0},
+    ('Retailer', 'Hold'): {'Retailer': 1.0},
+}
+
+# Rewards (Cost Optimization)
+rewards = {
+    ('Supplier', 'Order'): -2,
+    ('Warehouse', 'Ship'): -1,
+    ('Retailer', 'Ship'): 5,
+    ('Warehouse', 'Hold'): -0.5,
+    ('Retailer', 'Hold'): -0.2,
+}
+
 # ---------------------- Sidebar Navigation ---------------------- #
 menu = st.sidebar.radio("📌 Navigation", 
                         ["🏠 Home", "📊 Synthetic Data", "⚙️ MDP Optimization", "⚖️ Nash Equilibrium", "🚚 Delivery Routes"])
@@ -61,28 +83,6 @@ elif menu == "📊 Synthetic Data":
 # ---------------------- MDP Optimization ---------------------- #
 elif menu == "⚙️ MDP Optimization":
     st.header("⚙️ Supply Chain Policy Optimization Using MDP")
-
-    # Define Supply Chain Elements
-    states = ['Supplier', 'Warehouse', 'Retailer', 'Customer']
-    actions = ['Order', 'Ship', 'Hold']
-
-    # Transition Probabilities
-    transition_probs = {
-        ('Supplier', 'Order'): {'Warehouse': 0.8, 'Supplier': 0.2},
-        ('Warehouse', 'Ship'): {'Retailer': 0.7, 'Warehouse': 0.3},
-        ('Retailer', 'Ship'): {'Customer': 0.9, 'Retailer': 0.1},
-        ('Warehouse', 'Hold'): {'Warehouse': 1.0},
-        ('Retailer', 'Hold'): {'Retailer': 1.0},
-    }
-
-    # Rewards (Cost Optimization)
-    rewards = {
-        ('Supplier', 'Order'): -2,
-        ('Warehouse', 'Ship'): -1,
-        ('Retailer', 'Ship'): 5,
-        ('Warehouse', 'Hold'): -0.5,
-        ('Retailer', 'Hold'): -0.2,
-    }
 
     # Value Iteration Function
     def value_iteration(states, actions, transition_probs, rewards, gamma=0.9, theta=0.0001):
