@@ -679,6 +679,7 @@ def policy_update_section():
             pomdp_states,
             pomdp_actions,
             pomdp_transition_probs,
+            observation_probs,
             pomdp_rewards,  # or pomdp_rewards if that is your actual dictionary
             supplier_strategy,
             distributor_strategy
